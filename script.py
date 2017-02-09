@@ -51,6 +51,7 @@ def send_codes_through_channel(input_file, output_file, prob_of_bit_error):
     f = open(output_file, 'w')
     for line in input_message:
         f.write(send_one_line(line, prob_of_bit_error) + '\n')
+    f.close()
 
 
 def decode_one_line(line, h_matrix):
@@ -75,20 +76,43 @@ def decode(input_file, output_file, h_matrix):
         if len(line) > 0:
             dot = decode_one_line(map(int, list(line)), H)
             if dot == [0, 0, 0]:
-                decoded_message.append(dot[:4])
-            #else:
-                #todo
+                decoded_message.append(line[:4])
+            else:
+                il = H_transposed.index(dot)
+                temp_line = line[0:il] + bit_switch[line[il]] + line[il+1:]
+                decoded_message.append(temp_line[:4])
 
-    # print(decoded_message)
-    #todo write it to file
+    f = open(output_file, 'w')
+    for line in decoded_message:
+        f.write(line + '\n')
+    f.close()
 
-#todo compare two files
+
+def compare_two_messages(input_file, output_file):
+    with open(input_file, 'r') as f:
+        input_data = f.read()
+
+    with open(output_file, 'r') as f:
+        output_data = f.read()
+
+    input_lines = input_data.split('\n')
+    output_lines = output_data.split('\n')
+
+    length = len(input_lines)
+    correct = 0
+    for i in range(length):
+        if input_lines[i] == output_lines[i]:
+            correct += 1
+    print('Correct: ' + str(correct) + ' of ' + str(length) + ' messages. (' + str((100.0*correct)/(1.0*length)) + '%)')
+
 
 def main():
-    prob = 0
+    probability_of_one_bit_error = 0
     message_list_to_code_list('input_msg.txt', 'codes_to_send.txt', G)
-    send_codes_through_channel('codes_to_send.txt', 'codes_received.txt', prob)
+    send_codes_through_channel('codes_to_send.txt', 'codes_received.txt', probability_of_one_bit_error)
     decode('codes_received.txt', 'decoded_msg.txt', H_transposed)
+    compare_two_messages('input_msg.txt', 'decoded_msg.txt')
+
 
 if __name__ == '__main__':
     main()

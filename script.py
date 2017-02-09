@@ -3,9 +3,10 @@ import random
 import re
 
 G = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1], [0, 1, 1, 1], [1, 0, 1, 1], [1, 1, 0, 1]]
-H = []
+H_transposed = [[0, 0, 1], [0, 1, 0], [0, 1, 1], [1, 0, 0], [1, 0, 1], [1, 1, 0], [1, 1, 1]]
 
 bit_switch = {'1': '0', '0': '1'}
+int_switch = {1: 0, 0: 1}
 
 
 def calculate_code_for_4bit_msg(four_bit_msg, g_matrix):
@@ -54,23 +55,40 @@ def send_codes_through_channel(input_file, output_file, prob_of_bit_error):
 
 def decode_one_line(line, h_matrix):
     result = []
-    
+    parity_bits = 3
+    for i in range(parity_bits):
+        result.append(np.dot(h_matrix[i], line) % 2)
     return result
 
+
 def decode(input_file, output_file, h_matrix):
+    H = np.transpose(h_matrix)
+
     with open(input_file, 'r') as f:
         data = f.read()
 
     input_message = data.split('\n')
 
+    decoded_message = []
+
     for line in input_message:
-        decode_one_line(map(int, list(line)))
+        if len(line) > 0:
+            dot = decode_one_line(map(int, list(line)), H)
+            if dot == [0, 0, 0]:
+                decoded_message.append(dot[:4])
+            #else:
+                #todo
+
+    # print(decoded_message)
+    #todo write it to file
+
+#todo compare two files
 
 def main():
     prob = 0
     message_list_to_code_list('input_msg.txt', 'codes_to_send.txt', G)
     send_codes_through_channel('codes_to_send.txt', 'codes_received.txt', prob)
-
+    decode('codes_received.txt', 'decoded_msg.txt', H_transposed)
 
 if __name__ == '__main__':
     main()
